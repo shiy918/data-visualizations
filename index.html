@@ -1,0 +1,269 @@
+<!DOCTYPE>
+<html>
+	<head>
+		<title>Alcohol Consumption Data</title>
+		<script src="https://d3js.org/d3.v5.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans|Quicksand|Roboto" rel="stylesheet">
+
+		<style>
+
+			html,body{
+				margin:0;
+			}
+
+			.container{
+				width:80vw;
+				margin-left:auto;
+				margin-right:auto;
+			}
+
+			.first{
+				width:100%;
+			}
+
+			.second{
+				width:100%;
+				margin-bottom:10%;
+			}
+
+			h1{
+				width:95%;
+				margin-left:auto;
+				margin-right:auto;
+				margin-top:10%;
+				margin-bottom:2%;
+				font-family: 'Roboto', sans-serif;
+				font-size:50px;
+			}
+
+			p{
+				font-size: 20px;
+				margin-left:auto;
+				margin-right:auto;
+				width:95%;
+				margin-bottom:2%;
+				font-family: 'Open Sans', sans-serif;
+			}
+
+
+
+		</style>
+	</head>
+
+	<body>
+
+		<div class='container'>
+			<h1>Which Countries Made into the TOP 10 Alcohol Consumption List?</h1>
+			<p>This visualization diaplays the top 10 countries that consume the most amount of pure alcohol. </p>
+			<div class='first'>
+				<canvas id='chart1'></canvas>
+			</div>
+			<h1>Which Continents Consume the Most among the Top 10s?</h1>
+			<p>Next, we take a look at a dataset that includes the top ten countries that consume the most beer, spirit or wine. The countries are then grouped by their common continent, and the visualization shows the proportion of each continent that takes up the top ten lists. Each section within a bar represents the total number of servings of alcohol consumption of a particular continent.</p>
+			<div class='second'>
+				<canvas id='chart2'></canvas>
+			</div>
+		</div>
+
+
+		<script>
+
+			//join the three datasets into an array alcohol
+			Promise.all([
+				d3.csv('./data/beer.csv'),
+				d3.csv('./data/wine.csv'),
+				d3.csv('./data/spirit.csv'),
+				d3.csv('./data/alcohol.csv')
+
+			]).then(function(data){
+
+				var alcohol={};
+
+				//data restructuring 
+				alcohol.beer = process(data[0]);
+				alcohol.wine = process(data[1]);
+				alcohol.spirit = process(data[2]);
+
+
+				var countries = data[3];
+
+				//draw the chart using the data 
+				draw(alcohol);
+				drawbar(countries);
+			})
+
+
+			//data wrangling 
+			function process(data){
+
+
+				var collection = [];
+
+				for (var i in data){
+
+					var each = {};
+
+					var serving = Number(data[i].servings);
+					var continent = data[i].continent;
+
+
+					each.serving = serving;
+					each.continent = continent;
+
+					collection.push(each);
+				}
+
+				collection.pop();
+
+
+				var general = {};
+
+				var continent_cnts = {};
+				var continent_sers = {};
+
+
+				for (var i=0; i<collection.length;i++){
+
+					var serving = collection[i].serving;
+					var continent = collection[i].continent;
+
+
+					//count the number of times that a continent appears on the list
+				    if (continent_cnts[continent] >= 1){
+				    	continent_cnts[continent] += 1;
+				    	continent_sers[continent] += serving;
+				    }
+				    else if (typeof(continent_cnts[continent] == undefined)){
+				    	continent_cnts[continent] = 1;
+				    	continent_sers[continent] = serving;
+				    }
+
+				}
+
+				general.counts = continent_cnts;
+				general.servings = continent_sers;
+
+				return general;
+			}
+
+
+			function drawbar(data){
+
+				var consumption = [];
+				var label = [];
+
+				for (var i=0; i<data.length;i++){
+					consumption.push(data[i].total_litres_of_pure_alcohol);
+					label.push(data[i].country);
+				}
+
+
+				var chart1 = document.getElementById('chart1');
+
+				var linechart = new Chart(chart1, {
+					type: 'bar',
+					data: {
+						labels: label,
+						datasets:[{
+							label: 'total litres of pure alcohol',
+							data: consumption,
+							backgroundColor: 'rgb(71, 120, 198)'
+						}]
+					},
+					options: {
+						scales: {
+							xAxes: [{
+								gridLines: {
+									display: false,
+									color: '#fff',
+									zeroLineColor: '#fff',
+									zeroLineWidth: 0
+								},
+								ticks: {
+									fontFamily: "'Quicksand', sans-serif",
+									fontSize: 15
+								}
+							}],
+							yAxes: [{
+								ticks: {
+									beginAtZero: true,
+									fontSize: 12
+								}
+							}]
+						},
+						legend:{
+							display: true
+						}
+					}
+				})
+			}
+
+
+
+			function draw(data){
+
+
+				var beer = data.beer.servings;
+				var wine = data.wine.servings;
+				var spirit = data.spirit.servings;
+
+				var chart2 = document.getElementById('chart2');
+
+		
+				//setup for chart
+				var chart = new Chart(chart2, {
+					type: 'horizontalBar',
+					data: {
+						labels:['Beer','Spirit','Wine'],
+
+						datasets: [{
+							label: 'Africa',
+							data: [beer.Africa, 0 ,wine.Africa],
+							backgroundColor: '#f29d3c'
+						},{
+							label: 'Europe',
+							data: [beer.Europe, spirit.Europe, wine.Europe],
+							backgroundColor: '#f2cb32'
+						},{
+							label: 'Asia',
+							data: [0, spirit.Asia, 0],
+							backgroundColor: '#e2634a'
+						},{
+							label: 'South America',
+							data: [beer.South_America, spirit.South_America,0],
+							backgroundColor: '#70d651'
+						},{
+							label: 'North America',
+							data: [0, spirit.North_America, 0],
+							backgroundColor: '#6e82e5'
+						},{
+							label: 'Oceania',
+							data: [beer.Oceania, spirit.Oceania, 0],
+							backgroundColor: '#53c2db'
+						}]
+					},
+					options: {
+
+						scales: {
+							xAxes:[{
+								stacked: true
+							}],
+							yAxes: [{
+								ticks: {
+									fontSize: 15,
+									fontFamily: "'Quicksand', sans-serif"
+								},
+								barPercentage: 1,
+								categoryPercentage: 0.5,
+								stacked: true
+							}]
+						}
+					}
+				})
+
+			}
+
+		</script>
+	</body>
+</html>
