@@ -1,4 +1,4 @@
-#Data Visualization on Alcohol Consumption
+# Data Visualization on Alcohol Consumption
 
 This web application includes two data visualizations using data extracted from one dataset that contains alcohol consumption of all countries around the world. 
 
